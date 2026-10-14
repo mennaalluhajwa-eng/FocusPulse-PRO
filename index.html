@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusPulse PRO - Glassmorphic Dashboard</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Ambient Glowing Background Spheres -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel" id="sidebar">
+            <div class="brand">
+                <div class="logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <span class="brand-name">FocusPulse <span class="pro-tag">PRO</span></span>
+                <button class="mobile-close-btn" id="close-sidebar-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Main Dashboard</span>
+                </button>
+                <button class="nav-btn" data-tab="focus">
+                    <i class="fa-solid fa-stopwatch"></i>
+                    <span>Flip Clock (Focus)</span>
+                </button>
+                <button class="nav-btn" data-tab="habits">
+                    <i class="fa-solid fa-table-cells"></i>
+                    <span>Data Matrix</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <button class="sync-btn glass-card" id="sync-modal-btn">
+                    <i class="fa-solid fa-rotate text-cyan"></i> Notion / Calendar Sync
+                </button>
+                <div class="developer-credit">
+                    <p>Developed with ❤️ by <strong>M.A.A</strong></p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Layout -->
+        <main class="main-content">
+            <header class="top-navbar glass-panel">
+                <div class="nav-left">
+                    <button class="mobile-menu-btn" id="open-sidebar-btn"><i class="fa-solid fa-bars"></i></button>
+                    <!-- Weather & Clock Widget -->
+                    <div class="header-widget glass-card">
+                        <div class="weather-box">
+                            <i class="fa-solid fa-cloud-sun text-amber"></i>
+                            <span id="weather-temp">--°C</span>
+                            <span class="city-tag" id="weather-city">Cairo</span>
+                        </div>
+                        <div class="header-divider"></div>
+                        <div class="time-box">
+                            <i class="fa-regular fa-clock text-cyan"></i>
+                            <span id="header-time">00:00:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nav-actions">
+                    <!-- Export Dropdown -->
+                    <div class="dropdown">
+                        <button class="icon-btn glass-card" id="export-dropdown-btn" title="Export Data"><i class="fa-solid fa-download"></i></button>
+                        <div class="dropdown-menu glass-panel" id="export-menu">
+                            <button onclick="exportTasksCSV()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+                            <button onclick="exportTasksJSON()"><i class="fa-solid fa-file-code"></i> Export JSON</button>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Dropdown -->
+                    <div class="dropdown">
+                        <button class="icon-btn glass-card" id="notif-btn" title="Notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="notif-badge" id="notif-badge">0</span>
+                        </button>
+                        <div class="dropdown-menu notif-menu glass-panel" id="notif-menu">
+                            <div class="notif-header">
+                                <span>الإشعارات</span>
+                                <button id="clear-notifs-btn">مسح الكل</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Button -->
+                    <button class="icon-btn glass-card" id="settings-btn" title="Settings"><i class="fa-solid fa-gear"></i></button>
+                </div>
+            </header>
+
+            <div class="scrollable-area">
+                
+                <!-- TAB 1: MAIN DASHBOARD -->
+                <section id="dashboard" class="tab-content active">
+                    
+                    <!-- Glass Quote Card -->
+                    <div class="quote-card glass-card">
+                        <div class="quote-body">
+                            <i class="fa-solid fa-quote-left quote-icon"></i>
+                            <div class="quote-text-container">
+                                <p id="quote-text">"Loading daily motivation..."</p>
+                                <span id="quote-author">- Loading</span>
+                            </div>
+                        </div>
+                        <button id="refresh-quote-btn" class="refresh-quote-btn glass-card" title="New Quote"><i class="fa-solid fa-arrows-rotate"></i></button>
+                    </div>
+
+                    <!-- KPI Cards Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card glass-card">
+                            <div class="kpi-header">
+                                <span>Overall Completion</span>
+                                <i class="fa-solid fa-bullseye kpi-icon text-cyan"></i>
+                            </div>
+                            <div class="kpi-value text-cyan" id="kpi-completion">0%</div>
+                            <div class="kpi-subtext"><i class="fa-solid fa-arrow-up text-emerald"></i> Live tracking</div>
+                        </div>
+
+                        <div class="kpi-card glass-card">
+                            <div class="kpi-header">
+                                <span>Monthly Rate (المعدل الشهري)</span>
+                                <i class="fa-solid fa-calendar-check kpi-icon text-emerald"></i>
+                            </div>
+                            <div class="kpi-value text-emerald" id="kpi-monthly">0%</div>
+                            <div class="kpi-subtext positive"><i class="fa-solid fa-chart-line text-emerald"></i> Target: 85%</div>
+                        </div>
+
+                        <div class="kpi-card glass-card">
+                            <div class="kpi-header">
+                                <span>Yearly Pace (المعدل السنوي)</span>
+                                <i class="fa-solid fa-award kpi-icon text-purple"></i>
+                            </div>
+                            <div class="kpi-value text-purple" id="kpi-yearly">0%</div>
+                            <div class="kpi-subtext positive"><i class="fa-solid fa-arrow-trend-up text-purple"></i> Projected growth</div>
+                        </div>
+
+                        <div class="kpi-card glass-card">
+                            <div class="kpi-header">
+                                <span>Active Streak</span>
+                                <i class="fa-solid fa-fire kpi-icon text-amber"></i>
+                            </div>
+                            <div class="kpi-value text-amber" id="kpi-streak">0 Days</div>
+                            <div class="kpi-subtext text-amber"><i class="fa-solid fa-bolt"></i> Keep it up!</div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Performance Banner Chart -->
+                    <div class="chart-panel glass-card" style="margin-bottom: 24px;">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-wave-square text-cyan"></i> Weekly Performance Trend</h3>
+                        </div>
+                        <div class="canvas-container" style="height: 160px; position: relative;">
+                            <canvas id="topBannerChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid-row">
+                        <div class="chart-panel glass-card">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-chart-simple text-amber"></i> Weekly Task Comparison</h3>
+                            </div>
+                            <div class="canvas-container" style="height: 250px; position: relative;">
+                                <canvas id="weeklyBarChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-panel glass-card">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-diagram-project text-purple"></i> Skill & Habit Balance</h3>
+                            </div>
+                            <div class="canvas-container" style="height: 250px; position: relative; display: flex; align-items: center; justify-content: center;">
+                                <canvas id="radarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel glass-card" style="margin-top: 24px;">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-grip text-emerald"></i> Activity Heatmap</h3>
+                        </div>
+                        <div class="heatmap-grid" id="heatmap-container"></div>
+                    </div>
+                </section>
+
+                <!-- TAB 2: FLIP CLOCK & POMODORO -->
+                <section id="focus" class="tab-content">
+                    <div class="page-header">
+                        <h1>FlipDown Clock & Pomodoro ⏱️</h1>
+                        <p>Focus session tracker with interactive ambient chime feedback.</p>
+                    </div>
+
+                    <div class="flip-clock-container glass-card">
+                        <div class="mode-toggles glass-card">
+                            <button id="btn-realtime" class="active"><i class="fa-solid fa-clock"></i> Real-Time Clock</button>
+                            <button id="btn-pomodoro"><i class="fa-solid fa-stopwatch"></i> Pomodoro</button>
+                        </div>
+
+                        <div class="flip-display-wrapper">
+                            <!-- Hours -->
+                            <div class="clock-unit" id="hours-unit">
+                                <div class="flip-card card">
+                                    <div class="card-top"><span class="number-top">00</span></div>
+                                    <div class="card-bottom"><span class="number-bottom">00</span></div>
+                                    <div class="flip-leaf top-leaf"><span class="number-leaf">00</span></div>
+                                    <div class="flip-leaf bottom-leaf"><span class="number-leaf">00</span></div>
+                                </div>
+                                <span class="unit-label">HOURS</span>
+                            </div>
+
+                            <span class="clock-colon">:</span>
+
+                            <!-- Minutes -->
+                            <div class="clock-unit" id="minutes-unit">
+                                <div class="flip-card card">
+                                    <div class="card-top"><span class="number-top">00</span></div>
+                                    <div class="card-bottom"><span class="number-bottom">00</span></div>
+                                    <div class="flip-leaf top-leaf"><span class="number-leaf">00</span></div>
+                                    <div class="flip-leaf bottom-leaf"><span class="number-leaf">00</span></div>
+                                </div>
+                                <span class="unit-label">MINUTES</span>
+                            </div>
+
+                            <span class="clock-colon">:</span>
+
+                            <!-- Seconds -->
+                            <div class="clock-unit" id="seconds-unit">
+                                <div class="flip-card card">
+                                    <div class="card-top"><span class="number-top">00</span></div>
+                                    <div class="card-bottom"><span class="number-bottom">00</span></div>
+                                    <div class="flip-leaf top-leaf"><span class="number-leaf">00</span></div>
+                                    <div class="flip-leaf bottom-leaf"><span class="number-leaf">00</span></div>
+                                </div>
+                                <span class="unit-label">SECONDS</span>
+                            </div>
+                        </div>
+
+                        <div id="pomo-actions" class="hidden" style="margin-top: 35px;">
+                            <button class="action-btn play glass-card" id="pomo-play"><i class="fa-solid fa-play"></i> Start</button>
+                            <button class="action-btn pause glass-card" id="pomo-pause"><i class="fa-solid fa-pause"></i> Pause</button>
+                            <button class="action-btn reset glass-card" id="pomo-reset"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 3: DATA MATRIX (HABIT TRACKER) -->
+                <section id="habits" class="tab-content">
+                    <div class="page-header header-with-actions">
+                        <div>
+                            <h1>Habit Matrix 🗄️</h1>
+                            <p>Seamless daily task execution with audio-visual feedback.</p>
+                        </div>
+                        <div class="export-buttons-group">
+                            <button class="secondary-btn glass-card" onclick="exportTasksCSV()"><i class="fa-solid fa-file-csv text-emerald"></i> Export CSV</button>
+                            <button class="secondary-btn glass-card" onclick="exportTasksJSON()"><i class="fa-solid fa-file-code text-cyan"></i> Export JSON</button>
+                        </div>
+                    </div>
+                    
+                    <div class="task-manager-panel glass-card">
+                        <div class="task-input-area">
+                            <input type="text" id="task-input" placeholder="اكتب اسم العادة أو المهمة الجديدة..." class="glass-input">
+                            <select id="task-category" class="glass-input">
+                                <option value="Learning">Learning</option>
+                                <option value="Coding">Coding</option>
+                                <option value="Health">Health</option>
+                                <option value="Mindfulness">Mindfulness</option>
+                            </select>
+                            <button id="add-task-btn" class="primary-action-btn"><i class="fa-solid fa-plus"></i> Add Habit</button>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Habit Name</th>
+                                        <th>Category</th>
+                                        <th style="text-align: center;">Started ⏳</th>
+                                        <th style="text-align: center;">Break ☕</th>
+                                        <th style="text-align: center;">Finished ✅</th>
+                                        <th style="text-align: center;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="task-list-container">
+                                    <!-- Rendered Dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Integrations & Sync Modal -->
+    <div class="modal-overlay" id="sync-modal">
+        <div class="modal-card glass-panel">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-plug text-cyan"></i> Integrations & Sync</h3>
+                <button class="modal-close-btn" id="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>قم بدمج مهامك مع منصاتك الخارجية لمزامنة الجداول تلقائياً:</p>
+                
+                <div class="integration-item glass-card">
+                    <div class="integration-info">
+                        <i class="fa-brands fa-notion" style="font-size: 24px; color: #fff;"></i>
+                        <div>
+                            <strong>Notion Database API</strong>
+                            <p>سحب وإرسال المهام من Notion Workspace</p>
+                        </div>
+                    </div>
+                    <button class="status-btn action" id="connect-notion-btn">Connect Notion</button>
+                </div>
+
+                <div class="integration-item glass-card">
+                    <div class="integration-info">
+                        <i class="fa-solid fa-calendar-days text-cyan" style="font-size: 22px;"></i>
+                        <div>
+                            <strong>Google Calendar API</strong>
+                            <p>مزامنة مواعيد التركيز والبومودورو تلقائياً</p>
+                        </div>
+                    </div>
+                    <button class="status-btn action" id="sync-calendar-btn">Sync Now</button>
+                </div>
+
+                <div class="api-keys-box glass-card" style="padding: 16px; margin-top: 16px;">
+                    <h4 style="font-size: 13px; margin-bottom: 10px; color: var(--text-primary);"><i class="fa-solid fa-key text-amber"></i> إعداد المفاتيح (API Keys)</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <input type="text" id="notion-token-input" class="glass-input" placeholder="Notion Integration Token (secret_...)">
+                        <input type="text" id="google-client-id-input" class="glass-input" placeholder="Google OAuth Client ID (.apps.googleusercontent.com)">
+                        <button id="save-api-keys-btn" class="secondary-btn glass-card" style="justify-content: center;"><i class="fa-solid fa-floppy-disk text-emerald"></i> حفظ مفاتيح الربط</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-card glass-panel">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-gear text-cyan"></i> الإعدادات (Settings)</h3>
+                <button class="modal-close-btn" id="close-settings-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="direction: rtl;">
+                <div class="setting-item">
+                    <label for="pomo-duration-select">مدة البومودورو (بالدقائق):</label>
+                    <select id="pomo-duration-select" class="glass-input">
+                        <option value="15">15 دقيقة</option>
+                        <option value="25" selected>25 دقيقة</option>
+                        <option value="45">45 دقيقة</option>
+                        <option value="60">60 دقيقة</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label for="weather-city-input">المدينة الافتراضية للطقس:</label>
+                    <input type="text" id="weather-city-input" class="glass-input" value="Cairo" placeholder="Cairo, Tanta, Alexandria">
+                </div>
+
+                <div class="setting-item toggle-item">
+                    <span>المؤثرات الصوتية (Sound Effects):</span>
+                    <input type="checkbox" id="audio-toggle" checked class="custom-checkbox">
+                </div>
+
+                <div class="setting-item toggle-item">
+                    <span>إشعارات المتصفح (Browser Notifications):</span>
+                    <button id="request-notif-perm-btn" class="secondary-btn glass-card" style="padding: 6px 12px; font-size: 12px;">تفعيل الإشعارات</button>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button id="save-settings-btn" class="primary-action-btn" style="width: 100%; justify-content: center;">حفظ الإعدادات</button>
+                    <button id="reset-data-btn" class="danger-btn" style="width: 100%; margin-top: 10px;">إعادة ضبط كل البيانات (Reset All Data)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
